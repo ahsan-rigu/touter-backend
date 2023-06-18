@@ -39,9 +39,8 @@ const UserSchema = new mongoose.Schema({
     type: [],
     default: [],
   },
-  jwtToken: {
-    type: String,
-  },
 });
 
-module.exports = UserSchema;
+const User = mongoose.model("User", UserSchema);
+
+module.exports = User;

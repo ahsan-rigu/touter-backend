@@ -12,6 +12,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/api/user", userRoutes);
 
 app.use("*", (req, res) => {
+  consol.log("someone is trying to access a non existing route");
   res.send("Route Not Found");
 });
 
