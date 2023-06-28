@@ -14,7 +14,6 @@ const UserSchema = new mongoose.Schema({
     type: String,
     required: false,
     min: 4,
-    unique: true,
   },
   password: {
     type: String,
@@ -23,9 +22,13 @@ const UserSchema = new mongoose.Schema({
   },
   profilePicture: {
     type: String,
+    default:
+      "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSa0W4cTMxl3c4u738PdwJvW2xpbVnlvCZcTm-WiqHURQ&s",
   },
   coverPicture: {
     type: String,
+    default:
+      "https://static.vecteezy.com/system/resources/previews/005/412/075/original/abstract-pastel-purple-minimal-background-for-invitation-or-banner-free-vector.jpg",
   },
   followers: {
     type: [{ type: String }],

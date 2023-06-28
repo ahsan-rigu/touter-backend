@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
 const signup = async (req, res) => {
   try {
     const { name, username, password } = req.body;
+    console.log(req.body);
     await User.create({
       name,
       username,
@@ -12,16 +13,16 @@ const signup = async (req, res) => {
     });
     res.sendStatus(201);
   } catch (error) {
+    console.log(error);
     res.status(500).send({ message: error.message });
   }
 };
 
-const login = async (req, res) => {
+const login = async (req, res, next) => {
   try {
     const { username, password } = req.body;
     const user = await User.findOne({ username, password });
     if (!user) {
-      console.log("asdasd");
       res.status(401).send({ message: "Username and Password don't match" });
     } else {
       jwt.sign(
@@ -42,7 +43,37 @@ const login = async (req, res) => {
   }
 };
 
+const verify = async (req, res, next) => {
+  const { authorization } = req.headers;
+  console.log(req.body, authorization);
+  if (!authorization) {
+    res.status(403).send({ message: "No authorisation" });
+  } else {
+    const token = authorization.split(" ")[1];
+    try {
+      jwt.verify(token, process.env.JWT_KEY, (error, { _id }) => {
+        if (error) {
+          res.sendStatus(500);
+        }
+        req.userID = _id;
+        next();
+      });
+    } catch (e) {
+      res.status(500).send({
+        status: "failure",
+        message: e.message,
+      });
+    }
+  }
+};
+
+const authorize = async (req, res) => {
+  res.send("authorized");
+};
+
 module.exports = {
   signup,
   login,
+  verify,
+  authorize,
 };
