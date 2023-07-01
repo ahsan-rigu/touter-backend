@@ -30,12 +30,14 @@ const UserSchema = new mongoose.Schema({
     default:
       "https://static.vecteezy.com/system/resources/previews/005/412/075/original/abstract-pastel-purple-minimal-background-for-invitation-or-banner-free-vector.jpg",
   },
-  followers: {
-    type: [{ type: String }],
-    default: [],
-  },
-  following: {
-    type: [{ type: String }],
+  followers: [
+    { type: mongoose.Schema.Types.ObjectId, ref: "User", default: [] },
+  ],
+  following: [
+    { type: mongoose.Schema.Types.ObjectId, ref: "User", default: [] },
+  ],
+  bookmarks: {
+    type: [],
     default: [],
   },
   chats: {

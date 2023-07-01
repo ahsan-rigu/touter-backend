@@ -2,38 +2,72 @@ const Post = require("../models/postModel");
 const User = require("../models/userModel");
 
 const createPost = async (req, res) => {
-  console.log(req.body);
   try {
     if (req.body.img || req.body.postBody)
       await Post.create({ ...req.body, userID: req.userID });
-
     res.sendStatus(201);
   } catch (error) {
     res.sendStatus(500);
   }
 };
 
-const getPost = async (req, res) => {
+const getPostsByUsername = async (req, res) => {
   try {
-    const post = await Post.findOne({ _id });
-    req.status(200).send(post);
+    const posts = await Post.find({ userID: req.profile._id })
+      .populate({
+        path: "userID",
+        select: "username name profilePicture",
+      })
+      .populate({
+        path: "likes",
+        select: "username name profilePicture _id",
+      });
+    res.status(200).send({ profile: { ...req.profile._doc, posts } });
   } catch (error) {
-    res.status(500).send({
-      status: "failure",
-      error,
-    });
+    res.sendStatus(500);
+  }
+};
+
+const updatePost = async (req, res) => {
+  try {
+    if (req.body.img || req.body.postBody)
+      await Post.updateOne(
+        { _id: req.body.postID },
+        { postBody: req.body.postBody, img: req.body.img }
+      );
+    res.sendStatus(201);
+  } catch (error) {
+    res.sendStatus(500);
+  }
+};
+
+const deletePost = async (req, res) => {
+  try {
+    await Post.deleteOne({ _id: req.body.postID });
+    res.sendStatus(201);
+  } catch (error) {
+    res.sendStatus(500);
   }
 };
 
 const getPostsForUser = async (req, res) => {
   try {
-    const { userID, page } = req.body;
-    const following = await User.findById(userID).select("following");
-    const postsForUser = (await Post.find({})).filter(({ userID }) =>
-      following.includes(userID)
+    const { following } = await User.findOne({ _id: req.userID });
+    const posts = await Post.find({})
+      .populate({
+        path: "userID",
+        select: "username name profilePicture",
+      })
+      .populate({
+        path: "likes",
+        select: "username name profilePicture _id",
+      });
+    const postsForUser = posts.filter(({ userID }) =>
+      following.includes(userID._id)
     );
     res.status(200).send(postsForUser);
   } catch (error) {
+    console.log(error);
     res.status(500).send({
       status: "failure",
       error,
@@ -43,12 +77,15 @@ const getPostsForUser = async (req, res) => {
 
 const getPosts = async (req, res) => {
   try {
-    console.log("asdasd");
-    const posts = await Post.find({}).populate({
-      path: "User",
-      populate: "username name profilePicture",
-      strictPopulate: false,
-    });
+    const posts = await Post.find({})
+      .populate({
+        path: "userID",
+        select: "username name profilePicture",
+      })
+      .populate({
+        path: "likes",
+        select: "username name profilePicture _id",
+      });
     res.status(200).send(posts);
   } catch (error) {
     console.log(error);
@@ -60,18 +97,72 @@ const getPosts = async (req, res) => {
 };
 
 const likeUnlike = async (req, res) => {
-  //expected req body = {current userID, postID}
   try {
-    const { postID, userID } = req.body;
+    const { postID } = req.body;
     const post = await Post.findOne({ _id: postID });
-    if (article.likes.includes(userID)) {
-      await Post.updateOne({ _id: postID }, { $pull: { likes: userID } });
-      res.sendStatus(201);
+    if (post.likes.includes(req.userID)) {
+      await Post.updateOne({ _id: postID }, { $pull: { likes: req.userID } });
+      res.status(201).send({ message: "Unliked" });
     } else {
-      await Post.updateOne({ _id, postID }, { $push: { likes: userID } });
-      req.sendStatus(201);
+      const resp = await Post.updateOne(
+        { _id: postID },
+        { $push: { likes: req.userID } }
+      );
+      res.status(201).send({ message: "Liked" });
     }
   } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      status: "failure",
+      error,
+    });
+  }
+};
+
+const getBookmarked = async (req, res) => {
+  try {
+    const { bookmarks } = await User.findOne({ _id: req.userID });
+    const posts = await Post.find({})
+      .populate({
+        path: "userID",
+        select: "username name profilePicture",
+      })
+      .populate({
+        path: "likes",
+        select: "username name profilePicture _id",
+      });
+    const postsForUser = posts.filter(({ _id }) => bookmarks.includes(_id));
+    res.status(200).send(postsForUser);
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      status: "failure",
+      error,
+    });
+  }
+};
+
+const comment = async (req, res) => {
+  try {
+    const { postID, comment } = req.body;
+    await Post.updateOne({ _id: postID }, { $push: { comments: comment } });
+    res.sendStatus(201);
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      status: "failure",
+      error,
+    });
+  }
+};
+
+const removeComment = async (req, res) => {
+  try {
+    const { postID, comment } = req.body;
+    await Post.updateOne({ _id: postID }, { $pull: { comments: comment } });
+    res.sendStatus(201);
+  } catch (error) {
+    console.log(error);
     res.status(500).send({
       status: "failure",
       error,
@@ -80,8 +171,14 @@ const likeUnlike = async (req, res) => {
 };
 
 module.exports = {
+  getBookmarked,
   createPost,
   getPosts,
   getPostsForUser,
   likeUnlike,
+  updatePost,
+  deletePost,
+  comment,
+  removeComment,
+  getPostsByUsername,
 };

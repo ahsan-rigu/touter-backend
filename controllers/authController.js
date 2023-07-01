@@ -5,7 +5,6 @@ const jwt = require("jsonwebtoken");
 const signup = async (req, res) => {
   try {
     const { name, username, password } = req.body;
-    console.log(req.body);
     await User.create({
       name,
       username,
@@ -23,7 +22,7 @@ const login = async (req, res, next) => {
     const { username, password } = req.body;
     const user = await User.findOne({ username, password });
     if (!user) {
-      res.status(401).send({ message: "Username and Password don't match" });
+      res.status(401).send({ message: "username password don't match" });
     } else {
       jwt.sign(
         { _id: user._id },
@@ -45,7 +44,6 @@ const login = async (req, res, next) => {
 
 const verify = async (req, res, next) => {
   const { authorization } = req.headers;
-  console.log(req.body, authorization);
   if (!authorization) {
     res.status(403).send({ message: "No authorisation" });
   } else {
