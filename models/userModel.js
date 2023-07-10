@@ -44,6 +44,13 @@ const UserSchema = new mongoose.Schema({
     type: [],
     default: [],
   },
+
+  bio: {
+    type: String,
+  },
+  links: {
+    type: String,
+  },
 });
 
 const User = mongoose.model("User", UserSchema);
