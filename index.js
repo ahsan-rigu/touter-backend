@@ -18,6 +18,6 @@ app.use("*", (req, res) => {
   res.send("Route Not Found");
 });
 
-app.listen(8080, () => {
+app.listen(process.env.PORT || 8080, () => {
   console.log("listning (8080)");
 });
